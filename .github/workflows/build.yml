@@ -1,0 +1,42 @@
+name: Build and Deploy SDL2 WebAssembly
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y emscripten libsdl2-dev
+
+      - name: Compile SDL2 to WebAssembly
+        run: |
+          emcc game-src/main.c -s USE_SDL=2 -O2 -o main.html \
+          --shell-file index.html \
+          -s FULL_ES3=1 \
+          -s ALLOW_MEMORY_GROWTH=1 \
+          -s WASM=1 \
+          -s ASSERTIONS=1 \
+          -s USE_SDL_IMAGE=2
+
+      - name: Prepare deployment folder
+        run: |
+          mkdir -p deploy
+          cp main.html deploy/index.html
+          cp main.wasm deploy/
+          cp main.js deploy/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy
