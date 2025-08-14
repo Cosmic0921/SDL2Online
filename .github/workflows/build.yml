@@ -13,20 +13,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Install emsdk (Emscripten SDK)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y emscripten libsdl2-dev
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+          emcc --version
 
       - name: Compile SDL2 to WebAssembly
         run: |
+          source emsdk/emsdk_env.sh
           emcc game-src/main.c -s USE_SDL=2 -O2 -o main.html \
-          --shell-file index.html \
-          -s FULL_ES3=1 \
-          -s ALLOW_MEMORY_GROWTH=1 \
-          -s WASM=1 \
-          -s ASSERTIONS=1 \
-          -s USE_SDL_IMAGE=2
+            --shell-file index.html \
+            -s FULL_ES3=1 \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s WASM=1 \
+            -s ASSERTIONS=1
 
       - name: Prepare deployment folder
         run: |
